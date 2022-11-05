@@ -30,7 +30,11 @@ async function custom_down() {
 }
 
 window.onload = async function () {
-    const response = await fetch('/open-time');
-    console.log(response);
-    document.getElementById('appt').value = '08:00';
+    const response = await fetch('/open-time')
+    data = await response.json();
+    console.log(data);
+    document.getElementById('appt').value = data['data'][0];
+    document.getElementById('appa').value = data['data'][1];
+    
+    
 }

@@ -1,0 +1,10 @@
+[Unit]
+Description=shutters service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/shutters
+ExecStart=/opt/shutters/wsgi.sh
+
+[Install]
+WantedBy=multi-user.target
