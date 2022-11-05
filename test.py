@@ -3,6 +3,8 @@ from astral import LocationInfo
 from astral.sun import sun
 import threading
 
+
+time_format = "%d-%m-%Y %H:%M:%S"
 class Action():
     def __init__(self) -> None:
         pass
@@ -28,14 +30,14 @@ class MyThread(threading.Thread):
     def set_next_event(self):
         print("Setting next event")
         today = sun(city.observer, date=date.today())
-        if datetime.now().strftime('%H:%M:%S') < today['dawn'].strftime('%H:%M:%S'):
-            return today['dawn'].strftime('%H:%M:%S'), Action.open
-        if datetime.now().strftime('%H:%M:%S') < today['dusk'].strftime('%H:%M:%S'):
-            return today['dusk'].strftime('%H:%M:%S'), Action.close
-        
+        if datetime.now().strftime(time_format) < today['dawn'].strftime(time_format):
+            return today['dawn'].strftime(time_format), Action.open
+        if datetime.now().strftime(time_format) < today['dusk'].strftime(time_format):
+            return today['dusk'].strftime(time_format), Action.close
+        tomorrow_datetime = datetime.now() + timedelta(days=1)
         tomorrow = sun(city.observer, date=datetime.date(tomorrow_datetime))
-        if datetime.now().strftime('%H:%M:%S') < tomorrow['dawn'].strftime('%H:%M:%S'):
-            return tomorrow['dawn'].strftime('%H:%M:%S'), Action.open
+        if datetime.now().strftime(time_format) < tomorrow['dawn'].strftime(time_format):
+            return tomorrow['dawn'].strftime(time_format), Action.open
 
     def run(self):
         while True:
@@ -44,7 +46,7 @@ class MyThread(threading.Thread):
             threading.Thread(target=self._run).start()
 
     def _run(self):
-        if datetime.now().strftime('%H:%M:%S') > self.next_event_time:
+        if datetime.now().strftime(time_format) > self.next_event_time:
             self.next_event_action()
             self.next_event_time, self.next_event_action = self.set_next_event()
 

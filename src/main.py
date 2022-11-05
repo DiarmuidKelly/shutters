@@ -1,61 +1,19 @@
 from time import sleep
 
-import RPi.GPIO as io
 from flask import Flask, current_app
 from datetime import timedelta, datetime, date
 from astral import LocationInfo
 from astral.sun import sun
 import threading
 
+from shutter_controller import ShutterController
+
 app = Flask(__name__,
             static_url_path='',
             static_folder='static')
-io.setmode(io.BCM)
 
-class ShutterController:
-    def __init__(self):
-        self.down_pin = 15
-        self.up_pin = 14
-        self.up_pin_state = 1
-        self.down_pin_state = 1
 
-        self.open_time = None
-
-        io.setup(self.down_pin, io.OUT, initial=self.down_pin_state)
-        io.setup(self.up_pin, io.OUT, initial=self.up_pin_state)
-
-    def change_direction(self):
-        if self.up_pin_state == 1:
-            print("Go Down")
-            self.down()
-        elif self.down_pin_state == 1:
-            print("Go Up")
-            self.up()
-        self.__commit_state()
-
-    def up(self):
-        self.down_pin_state = 1
-        self.__commit_state()
-        sleep(0.1)
-        self.up_pin_state = 0
-        self.__commit_state()
-
-    def down(self):
-        self.up_pin_state = 1
-        self.__commit_state()
-        sleep(0.1)
-        self.down_pin_state = 0
-        self.__commit_state()
-
-    def stop(self):
-        self.up_pin_state = 1
-        self.down_pin_state = 1
-        self.__commit_state()
-
-    def __commit_state(self):
-        io.output(self.up_pin, self.up_pin_state)
-        io.output(self.down_pin, self.down_pin_state)
-
+time_format = "%d-%m-%Y %H:%M:%S"
 shutters = ShutterController()
 shutters.stop()
 
@@ -123,14 +81,14 @@ class MyThread(threading.Thread):
     def set_next_event(self):
         print("Setting next event")
         today = sun(city.observer, date=date.today())
-        if datetime.now().strftime('%H:%M:%S') < today['dawn'].strftime('%H:%M:%S'):
-            return today['dawn'].strftime('%H:%M:%S'), Action.open
-        if datetime.now().strftime('%H:%M:%S') < today['dusk'].strftime('%H:%M:%S'):
-            return today['dusk'].strftime('%H:%M:%S'), Action.close
-        
+        if datetime.now().strftime(time_format) < today['sunrise'].strftime(time_format):
+            return today['sunrise'].strftime(time_format), Action.open
+        if datetime.now().strftime(time_format) < today['dusk'].strftime(time_format):
+            return today['dusk'].strftime(time_format), Action.close
+        tomorrow_datetime = datetime.now() + timedelta(days=1)
         tomorrow = sun(city.observer, date=datetime.date(tomorrow_datetime))
-        if datetime.now().strftime('%H:%M:%S') < tomorrow['dawn'].strftime('%H:%M:%S'):
-            return tomorrow['dawn'].strftime('%H:%M:%S'), Action.open
+        if datetime.now().strftime(time_format) < tomorrow['dawn'].strftime(time_format):
+            return tomorrow['sunrise'].strftime(time_format), Action.open
 
     def run(self):
         while True:
@@ -139,7 +97,7 @@ class MyThread(threading.Thread):
             threading.Thread(target=self._run).start()
 
     def _run(self):
-        if datetime.now().strftime('%H:%M:%S') > self.next_event_time:
+        if datetime.now().strftime(time_format) > self.next_event_time:
             self.next_event_action()
             self.next_event_time, self.next_event_action = self.set_next_event()
 
