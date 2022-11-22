@@ -1,4 +1,4 @@
-## Setupn commands
+## Setup commands
 
 Copy the contents of src/ to ```/opt/shutters/```. Create symbolic link to service in user systemd 
 ```bash
