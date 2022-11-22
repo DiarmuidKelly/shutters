@@ -6,7 +6,6 @@ Type=forking
 WorkingDirectory=/opt/shutters
 ExecStart=/opt/shutters/wsgi.sh
 Restart=always
-RestartSec=1s
 
 [Install]
 WantedBy=multi-user.target

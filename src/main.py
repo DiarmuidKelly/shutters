@@ -105,8 +105,7 @@ my_thread = MyThread()
 my_thread.start()
 my_thread.sleep_event.set()
 
-def create_app():
-    app.run(host="0.0.0.0")
+application = app
 
 if __name__ == "__main__":
-    create_app()
+    application.run(host="0.0.0.0")
