@@ -93,7 +93,7 @@ class MyThread(threading.Thread):
     def run(self):
         while True:
             self.sleep_event.clear()
-            self.sleep_event.wait(2)
+            self.sleep_event.wait(60)
             threading.Thread(target=self._run).start()
 
     def _run(self):
