@@ -22,22 +22,3 @@ systemctl status emperor.uwsgi.service
 ```bash
 systemctl restart emperor.uwsgi.service
 ```
-
-## Alternative - Run shutters service directly
-Copy the contents of src/ to ```/opt/shutters/```. Create symbolic link to service in user systemd 
-```bash
-ln -s /opt/shutters/shutters.service /etc/systemd/user/shutters.service
-```
-
-
-### Run shutters directly (Tested not working reliably)
-```bash
-systemctl --user daemon-reload
-systemctl --user enable shutters.service
-systemctl --user start shutters.service
-systemctl --user status shutters.service
-```
-
-```bash
-systemctl --user restart shutters.service
-```
