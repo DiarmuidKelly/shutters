@@ -12,7 +12,6 @@ app = Flask(__name__,
             static_url_path='',
             static_folder='static')
 
-
 time_format = "%d-%m-%Y %H:%M:%S"
 shutters = ShutterController()
 shutters.stop()
@@ -52,6 +51,7 @@ def set_open_time():
     else:
         return shutters.open_time
 
+
 class Action():
     def __init__(self) -> None:
         pass
@@ -65,7 +65,6 @@ class Action():
         shutters.down()
         sleep(18)
         shutters.stop()
-
 
 city = LocationInfo("Berlin", "Germany", "Europe/Berlin")
 
@@ -81,13 +80,13 @@ class MyThread(threading.Thread):
     def set_next_event(self):
         print("Setting next event")
         today = sun(city.observer, date=date.today())
-        if datetime.now().strftime(time_format) < today['sunrise'].strftime(time_format):
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(today['sunrise'].strftime(time_format), time_format):
             return today['sunrise'].strftime(time_format), Action.open
-        if datetime.now().strftime(time_format) < today['dusk'].strftime(time_format):
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(today['dusk'].strftime(time_format), time_format):
             return today['dusk'].strftime(time_format), Action.close
         tomorrow_datetime = datetime.now() + timedelta(days=1)
         tomorrow = sun(city.observer, date=datetime.date(tomorrow_datetime))
-        if datetime.now().strftime(time_format) < tomorrow['dawn'].strftime(time_format):
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(tomorrow['dawn'].strftime(time_format), time_format):
             return tomorrow['sunrise'].strftime(time_format), Action.open
 
     def run(self):
@@ -97,7 +96,7 @@ class MyThread(threading.Thread):
             threading.Thread(target=self._run).start()
 
     def _run(self):
-        if datetime.now().strftime(time_format) > self.next_event_time:
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(self.next_event_time, time_format):
             self.next_event_action()
             self.next_event_time, self.next_event_action = self.set_next_event()
 
