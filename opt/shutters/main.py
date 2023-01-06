@@ -1,6 +1,6 @@
 from time import sleep
 
-from flask import Flask, current_app
+from flask import Flask, current_app, request
 from datetime import timedelta, datetime, date
 from astral import LocationInfo
 from astral.sun import sun
@@ -39,18 +39,17 @@ def stop():
     return 'Stopping!'
 
 
-@app.route('/open-time', methods=['GET'])
-def get_open_time():
+@app.route('/next-event', methods=['GET'])
+def get_next_event():
     return {"data": [my_thread.next_event_time, my_thread.next_event_action.__name__]}
 
 
-@app.route('/open-time', methods=['POST'])
-def set_open_time():
-    if shutters.open_time is None:
-        return 'unset'
-    else:
-        return shutters.open_time
-
+@app.route('/set-event', methods=['POST'])
+def set_next_event():
+    json = request.json
+    my_thread.next_event_action = json['type']
+    my_thread.next_event_time = json['time']
+    return {"data": [my_thread.next_event_time, my_thread.next_event_action.__name__]}
 
 class Action():
     def __init__(self) -> None:

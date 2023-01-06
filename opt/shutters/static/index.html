@@ -16,8 +16,12 @@
     <input id="stop-btn" type="button" value="stop" onclick="stop();">
     <br />
     <label for="appt">Next event:</label>
-    <input type="text" disabled id="appa" name="appa">
-    <input type="text" disabled id="appt" name="appt">
+    <select id="appa" name="appa">
+        <option value="open">open</option>
+        <option value="close">close</option>
+      </select>
+    <input type="text" id="appt" name="appt">
+    <button onclick="updateEvent()">Set Next Event</button>
 </body>
 
 </html>

@@ -30,10 +30,27 @@ async function custom_down() {
 }
 
 window.onload = async function () {
-    const response = await fetch('/open-time')
+    const response = await fetch('/next-event')
     data = await response.json();
     document.getElementById('appt').value = data['data'][0];
     document.getElementById('appa').value = data['data'][1];
     
     
+}
+
+function updateEvent(){
+    const params = {
+        type: document.getElementById('appt').value,
+        time: document.getElementById('appa').value
+    };
+    const options = {
+        method: 'POST',
+        json: JSON.stringify( params )  
+    };
+    fetch( '/set-event', options )
+        .then( response => response.json() )
+        .then( data =>  {
+            document.getElementById('appt').value = data['data'][0];
+            document.getElementById('appa').value = data['data'][1];
+        } );
 }
