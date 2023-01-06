@@ -47,8 +47,20 @@ def get_next_event():
 @app.route('/set-event', methods=['POST'])
 def set_next_event():
     json = request.json
-    my_thread.next_event_action = json['type']
-    my_thread.next_event_time = json['time']
+    print(json)
+    if json['type'] == 'open':
+        action = Action.open
+    elif json['type'] == 'close':
+        action = Action.close
+    else:
+        return {"data": ["error", "error"]}
+    print("setting time")
+    time = datetime.strptime(json['time'], time_format).strftime(time_format)
+
+    my_thread.set_next_event(time, action)
+    
+    print(my_thread.next_event_time)
+
     return {"data": [my_thread.next_event_time, my_thread.next_event_action.__name__]}
 
 class Action():
@@ -73,10 +85,17 @@ class MyThread(threading.Thread):
         threading.Thread.__init__(self)
         self.sleep_event = threading.Event()
         self.daemon = True
-        self.next_event_time, self.next_event_action = self.set_next_event()
+        time, action = self.get_next_event()
+        self.set_next_event(time, action)
         print(self.next_event_time)
 
-    def set_next_event(self):
+    def set_next_event(self, time, action):
+        self.next_event_time = time
+        self.next_event_action = action
+        print("setting new opening time")
+        print(self.next_event_action, self.next_event_time)
+
+    def get_next_event(self):
         print("Setting next event")
         today = sun(city.observer, date=date.today())
         if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(today['sunrise'].strftime(time_format), time_format):
