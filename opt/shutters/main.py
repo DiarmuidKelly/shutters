@@ -5,6 +5,7 @@ from datetime import timedelta, datetime, date
 from astral import LocationInfo
 from astral.sun import sun
 import threading
+import os
 
 from shutter_controller import ShutterController
 
@@ -80,10 +81,11 @@ class Action():
 city = LocationInfo("Berlin", "Germany", "Europe/Berlin")
 
 class MyThread(threading.Thread):
-
     def __init__(self):
         threading.Thread.__init__(self)
         self.sleep_event = threading.Event()
+        self.next_event_time = None
+        self.next_event_action = None
         self.daemon = True
         time, action = self.get_next_event()
         self.set_next_event(time, action)
@@ -93,6 +95,7 @@ class MyThread(threading.Thread):
         self.next_event_time = time
         self.next_event_action = action
         print("setting new opening time")
+        print(os.getpid())
         print(self.next_event_action, self.next_event_time)
 
     def get_next_event(self):
@@ -110,10 +113,12 @@ class MyThread(threading.Thread):
     def run(self):
         while True:
             self.sleep_event.clear()
-            self.sleep_event.wait(60)
+            self.sleep_event.wait(2)
             threading.Thread(target=self._run).start()
 
     def _run(self):
+        print(self.next_event_time)
+        print(os.getpid())
         if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(self.next_event_time, time_format):
             self.next_event_action()
             self.next_event_time, self.next_event_action = self.set_next_event()
