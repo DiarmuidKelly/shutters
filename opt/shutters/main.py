@@ -118,10 +118,9 @@ class MyThread(threading.Thread):
 
     def _run(self):
         print(self.next_event_time)
-        print(os.getpid())
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(self.next_event_time, time_format):
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(my_thread.next_event_time, time_format):
             self.next_event_action()
-            self.next_event_time, self.next_event_action = self.set_next_event()
+            self.next_event_time, self.next_event_action = self.set_next_event(self.next_event_time, self.next_event_action)
 
 my_thread = MyThread()
 my_thread.start()
