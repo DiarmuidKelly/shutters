@@ -94,9 +94,7 @@ class MyThread(threading.Thread):
     def set_next_event(self, time, action):
         self.next_event_time = time
         self.next_event_action = action
-        print("setting new opening time")
-        print(os.getpid())
-        print(self.next_event_action, self.next_event_time)
+        return self.next_event_action, self.next_event_time
 
     def get_next_event(self):
         print("Setting next event")
@@ -113,12 +111,11 @@ class MyThread(threading.Thread):
     def run(self):
         while True:
             self.sleep_event.clear()
-            self.sleep_event.wait(2)
+            self.sleep_event.wait(60)
             threading.Thread(target=self._run).start()
 
     def _run(self):
-        print(self.next_event_time)
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(my_thread.next_event_time, time_format):
+        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(self.next_event_time, time_format):
             self.next_event_action()
             self.next_event_time, self.next_event_action = self.set_next_event(self.next_event_time, self.next_event_action)
 

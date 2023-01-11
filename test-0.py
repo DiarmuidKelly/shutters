@@ -12,4 +12,6 @@ tomorrow = sun(city.observer, date=datetime(2023, 1, 1))
 print(datetime.strptime(today['dusk'].strftime(time_format), time_format) < datetime.strptime(tomorrow['dawn'].strftime(time_format), time_format))
 print(today['dusk'].strftime(time_format))
 
+print(datetime.strptime(datetime.now().strftime(time_format), time_format))
+
 print(tomorrow['dawn'].strftime(time_format))
