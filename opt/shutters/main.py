@@ -84,11 +84,9 @@ class MyThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.sleep_event = threading.Event()
-        self.next_event_time = None
-        self.next_event_action = None
         self.daemon = True
         time, action = self.get_next_event()
-        self.set_next_event(time, action)
+        self.next_event_action, self.next_event_time = self.set_next_event(time, action)
         print(self.next_event_time)
 
     def set_next_event(self, time, action):
@@ -115,9 +113,11 @@ class MyThread(threading.Thread):
             threading.Thread(target=self._run).start()
 
     def _run(self):
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) > datetime.strptime(self.next_event_time, time_format):
+        now = datetime.strptime(datetime.now().strftime(time_format), time_format) 
+        event = datetime.strptime(self.next_event_time, time_format)
+        if now > event:
             self.next_event_action()
-            self.next_event_time, self.next_event_action = self.set_next_event(self.next_event_time, self.next_event_action)
+            self.next_event_action, self.next_event_time = self.set_next_event(self.next_event_time, self.next_event_action)
 
 my_thread = MyThread()
 my_thread.start()
