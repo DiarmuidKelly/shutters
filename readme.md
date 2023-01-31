@@ -26,5 +26,6 @@ systemctl start emperor.uwsgi.service
 systemctl status emperor.uwsgi.service
 ```
 ```bash
+systemctl daemon-reload
 systemctl restart emperor.uwsgi.service
 ```

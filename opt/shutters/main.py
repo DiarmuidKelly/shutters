@@ -4,8 +4,7 @@ from flask import Flask, current_app, request
 from datetime import timedelta, datetime, date
 from astral import LocationInfo
 from astral.sun import sun
-import threading
-import os
+from threading import Thread, Event
 
 from shutter_controller import ShutterController
 
@@ -14,6 +13,8 @@ app = Flask(__name__,
             static_folder='static')
 
 time_format = "%d-%m-%Y %H:%M:%S"
+city = LocationInfo("Berlin", "Germany", "Europe/Berlin")
+
 shutters = ShutterController()
 shutters.stop()
 
@@ -40,29 +41,27 @@ def stop():
     return 'Stopping!'
 
 
-@app.route('/next-event', methods=['GET'])
-def get_next_event():
-    return {"data": [my_thread.next_event_time, my_thread.next_event_action.__name__]}
+@app.route('/open-time', methods=['GET'])
+def get_open_time():
+    global next_event_action
+    global next_event_time
+    return {"data": [next_event_time.strftime("%Y-%m-%dT%H:%M"), next_event_action.__name__]}
 
 
-@app.route('/set-event', methods=['POST'])
-def set_next_event():
-    json = request.json
-    print(json)
-    if json['type'] == 'open':
-        action = Action.open
-    elif json['type'] == 'close':
-        action = Action.close
+@app.route('/open-time', methods=['POST'])
+def set_open_time():
+    global next_event_action
+    global next_event_time
+    print(request.json)
+    if request.json['action'] == 'open':
+        next_event_action = Action.open
     else:
-        return {"data": ["error", "error"]}
-    print("setting time")
-    time = datetime.strptime(json['time'], time_format).strftime(time_format)
+        next_event_action = Action.close
 
-    my_thread.set_next_event(time, action)
-    
-    print(my_thread.next_event_time)
+    next_event_time = datetime.fromisoformat(request.json['datetime'])
 
-    return {"data": [my_thread.next_event_time, my_thread.next_event_action.__name__]}
+    return {"data": [next_event_time.strftime("%Y-%m-%dT%H:%M"), next_event_action.__name__]}
+
 
 class Action():
     def __init__(self) -> None:
@@ -78,50 +77,61 @@ class Action():
         sleep(18)
         shutters.stop()
 
-city = LocationInfo("Berlin", "Germany", "Europe/Berlin")
+def date_formatter(date_string):
+    return datetime.fromisoformat(str(datetime.strptime(date_string, time_format))).timestamp()
 
-class MyThread(threading.Thread):
-    def __init__(self):
-        threading.Thread.__init__(self)
-        self.sleep_event = threading.Event()
-        self.daemon = True
-        time, action = self.get_next_event()
-        self.next_event_action, self.next_event_time = self.set_next_event(time, action)
-        print(self.next_event_time)
+def compare_date(date_1, date_2):
+    return date_formatter(date_1.strftime(time_format)) < date_formatter(date_2.strftime(time_format))
 
-    def set_next_event(self, time, action):
-        self.next_event_time = time
-        self.next_event_action = action
-        return self.next_event_action, self.next_event_time
+def set_next_event():
+    print("Setting next event")
+    now = datetime.now()
+    today = sun(city.observer, date=date.today())
+    if compare_date(now, today['dawn']):
+        return today['dawn'], Action.open
+    if compare_date(now, today['dusk']):
+        return today['dusk'], Action.close
+    tomorrow_datetime = datetime.now() + timedelta(days=1)
+    tomorrow = sun(city.observer, date=datetime.date(tomorrow_datetime))
+    if compare_date(now, tomorrow['dawn']): 
+        return tomorrow['sunrise'], Action.open
 
-    def get_next_event(self):
-        print("Setting next event")
-        today = sun(city.observer, date=date.today())
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(today['sunrise'].strftime(time_format), time_format):
-            return today['sunrise'].strftime(time_format), Action.open
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(today['dusk'].strftime(time_format), time_format):
-            return today['dusk'].strftime(time_format), Action.close
-        tomorrow_datetime = datetime.now() + timedelta(days=1)
-        tomorrow = sun(city.observer, date=datetime.date(tomorrow_datetime))
-        if datetime.strptime(datetime.now().strftime(time_format), time_format) < datetime.strptime(tomorrow['dawn'].strftime(time_format), time_format):
-            return tomorrow['sunrise'].strftime(time_format), Action.open
+class MyThread(Thread):
+    StopEvent = 0
+    
+    def __init__(self,args):
+        Thread.__init__(self)
+        self.sleep_event = Event()
+        self.StopEvent = args
+        global next_event_action
+        global next_event_time
+        try:
+            next_event_time, next_event_action = set_next_event()
+        except Exception as e:
+            print(f"error {e}")
+        print(next_event_time)
 
     def run(self):
         while True:
             self.sleep_event.clear()
-            self.sleep_event.wait(60)
-            threading.Thread(target=self._run).start()
+            self.sleep_event.wait(5)
+            Thread(target=self._run).start()
 
     def _run(self):
-        now = datetime.strptime(datetime.now().strftime(time_format), time_format) 
-        event = datetime.strptime(self.next_event_time, time_format)
-        if now > event:
-            self.next_event_action()
-            self.next_event_action, self.next_event_time = self.set_next_event(self.next_event_time, self.next_event_action)
+        global next_event_action
+        global next_event_time
+        print(next_event_time)
+        if compare_date(next_event_time, datetime.now()):
+            next_event_action()
+            next_event_time, next_event_action = set_next_event()
+next_event_action = Action.open
+next_event_time = None
 
-my_thread = MyThread()
-my_thread.start()
-my_thread.sleep_event.set()
+Stop = Event()
+t = MyThread(Stop)
+t.setDaemon(True)
+t.start()
+t.sleep_event.set()
 
 application = app
 

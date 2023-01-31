@@ -16,12 +16,11 @@
     <input id="stop-btn" type="button" value="stop" onclick="stop();">
     <br />
     <label for="appt">Next event:</label>
-    <select id="appa" name="appa">
+    <select id="appa" name="appa" onchange="getAction(this)">
         <option value="open">open</option>
         <option value="close">close</option>
-      </select>
-    <input type="text" id="appt" name="appt">
-    <button disabled onclick="updateEvent()">Set Next Event</button>
+    </select>
+    <input type="datetime-local" id="appt" name="appt">
 </body>
 
 </html>

@@ -30,28 +30,21 @@ async function custom_down() {
 }
 
 window.onload = async function () {
-    await updateView();
-}
-
-async function updateView(){
-    const response = await fetch('/next-event')
+    const response = await fetch('/open-time')
     data = await response.json();
     document.getElementById('appt').value = data['data'][0];
     document.getElementById('appa').value = data['data'][1];
 }
 
-function updateEvent(){    
-    var data = {
-        type: document.getElementById('appa').value,
-        time: document.getElementById('appt').value
-    };
+async function getAction(selectObject) {
+    var action = selectObject.value;
+    var datetime = document.getElementById('appt').value;
 
-    var json = JSON.stringify(data);
+    var value = {"datetime": datetime, "action": action}
 
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "/set-event");
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.send(json);
-
-    updateView();
-}
+    const response = await fetch('/open-time', {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(value)});
+    data = await response.json();
+    document.getElementById('appt').value = data['data'][0];
+    document.getElementById('appa').value = data['data'][1];
+    console.log(value);
+  }
